@@ -12,7 +12,6 @@ use Symfony\Component\Security\Core\Encoder\UserPasswordEncoderInterface;
 class UserFixture extends Fixture
 {
     public const FIRST_USER_REFERENCE = 'FIRST_USER';
-    public const SECOND_USER_REFERENCE = 'SECOND_USER';
 
     /**
      * @var UserPasswordEncoderInterface
@@ -33,15 +32,13 @@ class UserFixture extends Fixture
     public function load(ObjectManager $manager)
     {
         $firstUser = $this->createUser('john.brown@test.com', 'John', 'Brown', 'ROLE_ADMIN', 'brown');
-        $secondUser = $this->createUser('sam.green@test.com', 'Sam', 'Green', 'ROLE_USER', 'green');
 
         $manager->persist($firstUser);
-        $manager->persist($secondUser);
+        $manager->persist($this->createUser('sam.green@test.com', 'Sam', 'Green', 'ROLE_USER', 'green'));
         $manager->persist($this->createUser('alan.white@test.com', 'Alan', 'White', 'ROLE_USER', 'white'));
         $manager->flush();
 
         $this->addReference(self::FIRST_USER_REFERENCE, $firstUser);
-        $this->addReference(self::SECOND_USER_REFERENCE, $secondUser);
     }
 
     /**

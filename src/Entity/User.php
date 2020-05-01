@@ -142,6 +142,14 @@ class User implements UserInterface
     }
 
     /**
+     * @return bool
+     */
+    public function isAdmin(): bool
+    {
+        return \in_array('ROLE_ADMIN', $this->getRoles(), true);
+    }
+
+    /**
      * @see UserInterface
      */
     public function getPassword(): string
@@ -239,6 +247,16 @@ class User implements UserInterface
         $this->active = $active;
 
         return $this;
+    }
+
+    /**
+     * @param UserInterface $user
+     *
+     * @return bool
+     */
+    public function isSameUser(UserInterface $user): bool
+    {
+        return $this->getUsername() === $user->getUsername();
     }
 
     /**
