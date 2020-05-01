@@ -7,10 +7,22 @@ namespace App\Entity;
 use Doctrine\ORM\Mapping as ORM;
 
 /**
- * @ORM\Entity
+ * @ORM\Entity(repositoryClass="App\Repository\TaskRepository")
  */
 class Task
 {
+    public const TITLE_API_KEY = 'title';
+    public const DESCRIPTION_API_KEY = 'description';
+    public const START_DATE_API_KEY = 'startDate';
+    public const DUE_DATE_API_KEY = 'dueDate';
+
+    public const ALL_API_KEYS = [
+        self::TITLE_API_KEY,
+        self::DESCRIPTION_API_KEY,
+        self::START_DATE_API_KEY,
+        self::DUE_DATE_API_KEY,
+    ];
+
     /**
      * @var int
      *
@@ -21,20 +33,26 @@ class Task
     private $id;
 
     /**
+     * @var string
+     *
+     * @ORM\Column(type="string", length=60)
+     */
+    private $title;
+
+    /**
+     * @var string
+     *
+     * @ORM\Column(type="string", length=255)
+     */
+    private $description;
+
+    /**
      * @var User
      *
      * @ORM\ManyToOne(targetEntity="App\Entity\User")
      * @ORM\JoinColumn(nullable=false)
      */
     private $user;
-
-    /**
-     * @var TaskTemplate
-     *
-     * @ORM\ManyToOne(targetEntity="App\Entity\TaskTemplate")
-     * @ORM\JoinColumn(nullable=false)
-     */
-    private $template;
 
     /**
      * @var TaskStatus
@@ -79,6 +97,46 @@ class Task
     }
 
     /**
+     * @return string|null
+     */
+    public function getTitle(): ?string
+    {
+        return $this->title;
+    }
+
+    /**
+     * @param string $title
+     *
+     * @return Task
+     */
+    public function setTitle(string $title): self
+    {
+        $this->title = $title;
+
+        return $this;
+    }
+
+    /**
+     * @return string|null
+     */
+    public function getDescription(): ?string
+    {
+        return $this->description;
+    }
+
+    /**
+     * @param string $description
+     *
+     * @return Task
+     */
+    public function setDescription(string $description): self
+    {
+        $this->description = $description;
+
+        return $this;
+    }
+
+    /**
      * @return User|null
      */
     public function getUser(): ?User
@@ -94,26 +152,6 @@ class Task
     public function setUser(User $user): self
     {
         $this->user = $user;
-
-        return $this;
-    }
-
-    /**
-     * @return TaskTemplate|null
-     */
-    public function getTemplate(): ?TaskTemplate
-    {
-        return $this->template;
-    }
-
-    /**
-     * @param TaskTemplate $template
-     *
-     * @return Task
-     */
-    public function setTemplate(TaskTemplate $template): self
-    {
-        $this->template = $template;
 
         return $this;
     }
@@ -191,10 +229,6 @@ class Task
      */
     public function __toString(): string
     {
-        return \sprintf(
-            '%s - %s',
-            $this->getUser()->getFullName(),
-            $this->getTemplate()->getTitle()
-        );
+        return $this->getTitle();
     }
 }
