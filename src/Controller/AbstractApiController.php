@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Controller;
 
+use JMS\Serializer\SerializationContext;
+use JMS\Serializer\SerializerBuilder;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Response;
@@ -71,5 +73,20 @@ abstract class AbstractApiController extends AbstractController
             ],
             Response::HTTP_INTERNAL_SERVER_ERROR
         );
+    }
+
+    /**
+     * @param mixed $data
+     * @param array $serializationGroups
+     *
+     * @return string
+     */
+    protected function serialize($data, array $serializationGroups): string
+    {
+        $serializer = SerializerBuilder::create()->build();
+        $serializationContext = SerializationContext::create();
+        $serializationContext->setGroups($serializationGroups);
+
+        return $serializer->serialize($data, 'json', $serializationContext);
     }
 }

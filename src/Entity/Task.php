@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as JMS;
 
 /**
  * @ORM\Entity(repositoryClass="App\Repository\TaskRepository")
@@ -29,6 +30,9 @@ class Task
      * @ORM\Id()
      * @ORM\GeneratedValue()
      * @ORM\Column(type="integer")
+     *
+     * @JMS\Type("integer")
+     * @JMS\Groups({"taskList", "taskDetails"})
      */
     private $id;
 
@@ -36,6 +40,9 @@ class Task
      * @var string
      *
      * @ORM\Column(type="string", length=60)
+     *
+     * @JMS\Type("string")
+     * @JMS\Groups({"taskList", "taskDetails"})
      */
     private $title;
 
@@ -43,6 +50,9 @@ class Task
      * @var string
      *
      * @ORM\Column(type="string", length=255)
+     *
+     * @JMS\Type("string")
+     * @JMS\Groups({"taskDetails"})
      */
     private $description;
 
@@ -51,6 +61,9 @@ class Task
      *
      * @ORM\ManyToOne(targetEntity="App\Entity\User")
      * @ORM\JoinColumn(nullable=false)
+     *
+     * @JMS\Type("App\Entity\User")
+     * @JMS\Groups({"taskDetails"})
      */
     private $user;
 
@@ -59,6 +72,9 @@ class Task
      *
      * @ORM\ManyToOne(targetEntity="App\Entity\TaskStatus")
      * @ORM\JoinColumn(nullable=false)
+     *
+     * @JMS\Type("App\Entity\TaskStatus")
+     * @JMS\Groups({"taskList", "taskDetails"})
      */
     private $status;
 
@@ -66,6 +82,10 @@ class Task
      * @var \DateTime
      *
      * @ORM\Column(type="datetime")
+     *
+     * @JMS\Type("DateTime<'d-m-Y H:i:s'>")
+     * @JMS\Groups({"taskList", "taskDetails"})
+     * @JMS\SerializedName("startDate")
      */
     private $startDate;
 
@@ -73,6 +93,10 @@ class Task
      * @var \DateTime
      *
      * @ORM\Column(type="datetime")
+     *
+     * @JMS\Type("DateTime<'d-m-Y H:i:s'>")
+     * @JMS\Groups({"taskList", "taskDetails"})
+     * @JMS\SerializedName("dueDate")
      */
     private $dueDate;
 
@@ -80,6 +104,9 @@ class Task
      * @var \DateTime
      *
      * @ORM\Column(type="datetime")
+     *
+     * @JMS\Type("DateTime<'d-m-Y H:i:s'>")
+     * @JMS\Groups({"taskDetails"})
      */
     private $created;
 

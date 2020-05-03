@@ -10,6 +10,8 @@ use App\Classes\Helpers\Task\TaskApiHandler;
 use App\Classes\Helpers\Task\TaskPermissionChecker;
 use App\Entity\Task;
 use App\Repository\TaskRepository;
+use Nelmio\ApiDocBundle\Annotation\Model;
+use Swagger\Annotations as SWG;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
@@ -22,6 +24,43 @@ class TaskController extends AbstractApiController
 {
     /**
      * @Route("/tasks", name="get_all_tasks", methods={"GET"})
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns the tasks of an user",
+     *     @SWG\Schema(
+     *         type="array",
+     *         @SWG\Items(ref=@Model(type=Task::class, groups={"taskList"}))
+     *     )
+     * )
+     * @SWG\Response(
+     *     response="500",
+     *     description="Returned when a server error occurred"
+     * )
+     * @SWG\Parameter(
+     *     name=Task::START_DATE_API_KEY,
+     *     in="query",
+     *     type="string",
+     *     description="Task start date",
+     *     @SWG\Schema(
+     *         example="01-04-2020 00:00:00"
+     *     )
+     * )
+     * @SWG\Parameter(
+     *     name=Task::DUE_DATE_API_KEY,
+     *     in="query",
+     *     type="string",
+     *     description="Task due date",
+     *     @SWG\Schema(
+     *         example="01-04-2020 23:59:59"
+     *     )
+     * )
+     * @SWG\Parameter(
+     *     name="isActive",
+     *     in="query",
+     *     type="boolean",
+     *     description="Only active tasks"
+     * )
+     * @SWG\Tag(name="tasks")
      *
      * @param Request $request
      * @param TaskRepository $taskRepository
@@ -46,29 +85,36 @@ class TaskController extends AbstractApiController
             }
         }
 
-        $data = \array_map(
-            static function (Task $task) {
-                return [
-                    'id' => $task->getId(),
-                    'title' => $task->getTitle(),
-                    'status' => $task->getStatus()->getDescription(),
-                    'startDate' => $task->getStartDate()->format('d-m-Y H:i:s'),
-                    'dueDate' => $task->getDueDate()->format('d-m-Y H:i:s'),
-                ];
-            },
-            $taskRepository->getActiveByUserAndDates(
-                $this->getUser(),
-                $startDate ?? null,
-                $dueDate ?? null,
-                (bool) $request->query->get('isActive', true)
-            )
+        $data = $taskRepository->getActiveByUserAndDates(
+            $this->getUser(),
+            $startDate ?? null,
+            $dueDate ?? null,
+            (bool) $request->query->get('isActive', true)
         );
 
-        return new JsonResponse($data, Response::HTTP_OK);
+        return new JsonResponse($this->serialize($data, ['taskList']), Response::HTTP_OK, [], true);
     }
 
     /**
      * @Route("/tasks/{id}", name="get_specific_task", methods={"GET"}, requirements={"id"="\d+"})
+     * @SWG\Response(
+     *     response=200,
+     *     description="Returns the specific task details",
+     *     @SWG\Schema(ref=@Model(type=Task::class, groups={"taskDetails"}))
+     * )
+     * @SWG\Response(
+     *     response=403,
+     *     description="Access denied for the requested task"
+     * )
+     * @SWG\Response(
+     *     response=404,
+     *     description="The requested task is not found"
+     * )
+     * @SWG\Response(
+     *     response="500",
+     *     description="Returned when a server error occurred"
+     * )
+     * @SWG\Tag(name="specificTask")
      *
      * @param TaskRepository $taskRepository
      * @param TaskPermissionChecker $taskPermissionChecker
@@ -91,22 +137,58 @@ class TaskController extends AbstractApiController
             return $this->createForbiddenJsonResponse('Access denied for the requested task.');
         }
 
-        return new JsonResponse(
-            [
-                'id' => $task->getId(),
-                'title' => $task->getTitle(),
-                'description' => $task->getDescription(),
-                'status' => $task->getStatus()->getDescription(),
-                'startDate' => $task->getStartDate()->format('d-m-Y H:i:s'),
-                'dueDate' => $task->getDueDate()->format('d-m-Y H:i:s'),
-                'created' => $task->getCreated()->format('d-m-Y H:i:s'),
-            ],
-            Response::HTTP_OK
-        );
+        return new JsonResponse($this->serialize($task, ['taskDetails']), Response::HTTP_OK, [], true);
     }
 
     /**
      * @Route("/tasks", name="create_task", methods={"POST"})
+     * @SWG\Response(
+     *     response=200,
+     *     description="Creates the task"
+     * )
+     * @SWG\Response(
+     *     response="400",
+     *     description="Provided task data is invalid"
+     * )
+     * @SWG\Response(
+     *     response="500",
+     *     description="Returned when a server error occurred"
+     * )
+     * @SWG\Parameter(
+     *     name=Task::TITLE_API_KEY,
+     *     in="body",
+     *     required=true,
+     *     description="Task title",
+     *     @SWG\Schema(type="string")
+     * )
+     * @SWG\Parameter(
+     *     name=Task::DESCRIPTION_API_KEY,
+     *     in="body",
+     *     required=true,
+     *     description="Task description",
+     *     @SWG\Schema(type="string")
+     * )
+     * @SWG\Parameter(
+     *     name=Task::START_DATE_API_KEY,
+     *     in="body",
+     *     required=true,
+     *     description="Task start date",
+     *     @SWG\Schema(
+     *         type="string",
+     *         example="01-04-2020 00:00:00"
+     *     )
+     * )
+     * @SWG\Parameter(
+     *     name=Task::DUE_DATE_API_KEY,
+     *     in="body",
+     *     required=true,
+     *     description="Task due date",
+     *     @SWG\Schema(
+     *         type="string",
+     *         example="01-04-2020 23:59:59"
+     *     )
+     * )
+     * @SWG\Tag(name="createTask")
      *
      * @param Request $request
      * @param TaskApiHandler $taskApiHandler
@@ -128,6 +210,62 @@ class TaskController extends AbstractApiController
 
     /**
      * @Route("/tasks/{id}", name="task_full_update", methods={"PUT"}, requirements={"id"="\d+"})
+     *
+     * @SWG\Response(
+     *     response=204,
+     *     description="Full updates the task"
+     * )
+     * @SWG\Response(
+     *     response="400",
+     *     description="Provided task data is invalid"
+     * )
+     * @SWG\Response(
+     *     response=403,
+     *     description="Access denied for the requested task"
+     * )
+     * @SWG\Response(
+     *     response=404,
+     *     description="The requested task is not found"
+     * )
+     * @SWG\Response(
+     *     response="500",
+     *     description="Returned when a server error occurred"
+     * )
+     * @SWG\Parameter(
+     *     name=Task::TITLE_API_KEY,
+     *     in="body",
+     *     required=true,
+     *     description="Task title",
+     *     @SWG\Schema(type="string")
+     * )
+     * @SWG\Parameter(
+     *     name=Task::DESCRIPTION_API_KEY,
+     *     in="body",
+     *     required=true,
+     *     description="Task description",
+     *     @SWG\Schema(type="string")
+     * )
+     * @SWG\Parameter(
+     *     name=Task::START_DATE_API_KEY,
+     *     in="body",
+     *     required=true,
+     *     description="Task start date",
+     *     @SWG\Schema(
+     *         type="string",
+     *         example="01-04-2020 00:00:00"
+     *     )
+     * )
+     * @SWG\Parameter(
+     *     name=Task::DUE_DATE_API_KEY,
+     *     in="body",
+     *     required=true,
+     *     description="Task due date",
+     *     @SWG\Schema(
+     *         type="string",
+     *         example="01-04-2020 23:59:59"
+     *     )
+     * )
+     * @SWG\Tag(name="fullUpdateTask")
      *
      * @param Request $request
      * @param TaskApiHandler $taskApiHandler
@@ -165,6 +303,61 @@ class TaskController extends AbstractApiController
 
     /**
      * @Route("/tasks/{id}", name="task_partial_update", methods={"PATCH"}, requirements={"id"="\d+"})
+     * @SWG\Response(
+     *     response=200,
+     *     description="Partial updates the task"
+     * )
+     * @SWG\Response(
+     *     response="400",
+     *     description="Provided task data is invalid"
+     * )
+     * @SWG\Response(
+     *     response=403,
+     *     description="Access denied for the requested task"
+     * )
+     * @SWG\Response(
+     *     response=404,
+     *     description="The requested task is not found"
+     * )
+     * @SWG\Response(
+     *     response="500",
+     *     description="Returned when a server error occurred"
+     * )
+     * @SWG\Parameter(
+     *     name=Task::TITLE_API_KEY,
+     *     in="body",
+     *     required=false,
+     *     description="Task title",
+     *     @SWG\Schema(type="string")
+     * )
+     * @SWG\Parameter(
+     *     name=Task::DESCRIPTION_API_KEY,
+     *     in="body",
+     *     required=false,
+     *     description="Task description",
+     *     @SWG\Schema(type="string")
+     * )
+     * @SWG\Parameter(
+     *     name=Task::START_DATE_API_KEY,
+     *     in="body",
+     *     required=false,
+     *     description="Task start date",
+     *     @SWG\Schema(
+     *         type="string",
+     *         example="01-04-2020 00:00:00"
+     *     )
+     * )
+     * @SWG\Parameter(
+     *     name=Task::DUE_DATE_API_KEY,
+     *     in="body",
+     *     required=false,
+     *     description="Task due date",
+     *     @SWG\Schema(
+     *         type="string",
+     *         example="01-04-2020 23:59:59"
+     *     )
+     * )
+     * @SWG\Tag(name="partialUpdateTask")
      *
      * @param Request $request
      * @param TaskApiHandler $taskApiHandler
@@ -197,22 +390,28 @@ class TaskController extends AbstractApiController
             return $this->createInternalErrorJsonResponse('Task was not created.');
         }
 
-        return new JsonResponse(
-            [
-                'id' => $task->getId(),
-                'title' => $task->getTitle(),
-                'description' => $task->getDescription(),
-                'status' => $task->getStatus()->getDescription(),
-                'startDate' => $task->getStartDate()->format('d-m-Y H:i:s'),
-                'dueDate' => $task->getDueDate()->format('d-m-Y H:i:s'),
-                'created' => $task->getCreated()->format('d-m-Y H:i:s'),
-            ],
-            Response::HTTP_OK
-        );
+        return new JsonResponse($this->serialize($task, ['taskDetails']), Response::HTTP_OK, [], true);
     }
 
     /**
      * @Route("/tasks/{id}", name="delete_task", methods={"DELETE"}, requirements={"id"="\d+"})
+     * @SWG\Response(
+     *     response=204,
+     *     description="Deletes the task"
+     * )
+     * @SWG\Response(
+     *     response=403,
+     *     description="Access denied for the requested task"
+     * )
+     * @SWG\Response(
+     *     response=404,
+     *     description="The requested task is not found"
+     * )
+     * @SWG\Response(
+     *     response="500",
+     *     description="Returned when a server error occurred"
+     * )
+     * @SWG\Tag(name="deleteTask")
      *
      * @param TaskPermissionChecker $taskPermissionChecker
      * @param int $id
