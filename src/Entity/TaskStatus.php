@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as JMS;
 
 /**
  * @ORM\Entity
@@ -45,6 +46,9 @@ class TaskStatus
      * @var string
      *
      * @ORM\Column(type="string", length=20)
+     *
+     * @JMS\Type("string")
+     * @JMS\Groups({"taskList", "taskDetails"})
      */
     private $description;
 

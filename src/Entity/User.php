@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Entity;
 
 use Doctrine\ORM\Mapping as ORM;
+use JMS\Serializer\Annotation as JMS;
 use Symfony\Component\Security\Core\User\UserInterface;
 
 /**
@@ -25,6 +26,9 @@ class User implements UserInterface
      * @var string
      *
      * @ORM\Column(type="string", length=180, unique=true)
+     *
+     * @JMS\Type("string")
+     * @JMS\Groups({"taskDetails"})
      */
     private $email;
 
@@ -210,6 +214,11 @@ class User implements UserInterface
     }
 
     /**
+     * @JMS\VirtualProperty()
+     * @JMS\Type("string")
+     * @JMS\Groups({"taskDetails"})
+     * @JMS\SerializedName("fullName")
+     *
      * @return string
      */
     public function getFullName(): string
